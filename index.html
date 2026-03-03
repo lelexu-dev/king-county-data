@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storytelling with Data - King County Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 引入与华盛顿邮报风格类似的字体 */
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Noto+Sans+SC:wght@300;400;700&family=Noto+Serif+SC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            margin: 0;
+        }
+
+        /* 沉浸式顶部栏 */
+        .wp-nav {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+        }
+
+        .wp-logo {
+            font-family: 'Playfair Display', serif;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        /* 全屏背景 Hero 区域 */
+        .hero-section {
+            position: relative;
+            min-height: 110vh; /* 稍微高一点，增加沉浸感 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 6rem 2rem;
+            text-align: center;
+            /* 替换此处的 URL 为你的图片路径 */
+            background: linear-gradient(rgba(26, 51, 56, 0.75), rgba(26, 51, 56, 0.85)), 
+                        url('https://images.unsplash.com/photo-1502175353174-a7a70e73b362?q=80&w=2000&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* 视差效果 */
+            color: #ffffff;
+        }
+
+        .wp-exclusive-tag {
+            background-color: #e31212; /* 红色强调色更具新闻感 */
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 2px 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 900;
+            margin-bottom: 2rem;
+            border-radius: 2px;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            max-width: 1100px;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.03em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.35rem;
+            max-width: 750px;
+            opacity: 0.95;
+            font-weight: 300;
+            line-height: 1.6;
+            margin-bottom: 4rem;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+        }
+
+        /* 磨砂玻璃效果的地图容器 */
+        .map-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px); /* 磨砂玻璃 */
+            -webkit-backdrop-filter: blur(15px);
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+
+        /* 正文区域优化 */
+        .content-container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+        }
+
+        .serif {
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .chart-caption {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 1.5rem;
+            border-left: 3px solid #1a3338;
+            padding-left: 1.25rem;
+            font-style: italic;
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 3rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.8;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部导航栏模仿 -->
+    <nav class="wp-nav">
+        <div class="wp-logo">The King County Post</div>
+    </nav>
+
+    <!-- 1. 沉浸式背景大图封面 -->
+    <section class="hero-section">
+        <div class="wp-exclusive-tag">Exclusive Report</div>
+        
+        <h1 class="hero-title">
+            Income and Poverty Data Reveal a Divided King County
+        </h1>
+        
+        <p class="hero-subtitle">
+            A deep dive into the socioeconomic fissures within Washington State's most populous county.
+        </p>
+
+        <!-- 磨砂玻璃地图容器 -->
+        <div class="map-wrapper">
+            <h2 class="text-xs font-bold text-left mb-4 opacity-80 uppercase tracking-widest flex items-center">
+                <span class="w-2 h-2 bg-red-600 rounded-full mr-2"></span>
+                Interactive: Median Household Income by Census Tract
+            </h2>
+            <iframe title="Room for Rich and Poor in State's Largest County" aria-label="Choropleth map" id="datawrapper-chart-bjDFX" src="https://datawrapper.dwcdn.net/bjDFX/1/" scrolling="no" frameborder="0" style="width: 0; min-width: 100% !important; border: none;" height="500" data-external="1"></iframe>
+        </div>
+
+        <div class="scroll-hint">Scroll to read the story</div>
+    </section>
+
+    <!-- 2. 正文内容 -->
+    <main class="content-container">
+        
+        <div class="serif prose prose-slate prose-lg">
+            <p>
+                Median household income varies widely across King County, revealing a clear geographic divide between affluent and lower-income communities. Census tract data show clusters of higher-income neighborhoods concentrated on the Eastside, while southern areas report substantially lower median incomes.
+            </p>
+            <p>
+                City-level poverty data reinforce this divide. Communities with lower median incomes also tend to have higher poverty rates, in some cases exceeding 13 percent. In contrast, higher-income Eastside cities generally post poverty rates in the single digits.
+            </p>
+            <p>
+                Because King County is home to more than 2.2 million residents, these disparities affect large numbers of households. In lower-income cities, thousands of residents fall below the federal poverty line, underscoring how income inequality translates into concentrated economic vulnerability.
+            </p>
+            <p>
+                Taken together, the income map and poverty rates suggest that economic differences in King County are not evenly distributed but spatially clustered, with affluent and economically vulnerable communities often separated by only a short distance.
+            </p>
+        </div>
+
+        <!-- 3. 柱状图部分 -->
+        <div class="my-24">
+            <h3 class="text-3xl font-bold mb-8 text-gray-900 serif">Poverty Rates Vary Widely Across King County Cities</h3>
+            
+            <div class="p-2 bg-gray-50 rounded-lg">
+                <iframe title="Poverty Rates Vary Widely Across King County Cities" aria-label="Bar Chart" id="datawrapper-chart-i4jtX" src="https://datawrapper.dwcdn.net/i4jtX/1/" scrolling="no" frameborder="0" style="width: 0; min-width: 100% !important; border: none;" height="390" data-external="1"></iframe>
+            </div>
+            
+            <p class="chart-caption">
+                <strong>Complementary Data:</strong> While the map highlights income distribution, this bar chart shows the direct impact on residents' welfare, indicating that lower income levels strongly correlate with increased poverty vulnerability in the region.
+            </p>
+        </div>
+
+        <!-- 核心发现 -->
+        <hr class="my-16 border-gray-200">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+            <div>
+                <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Social Trends</h4>
+                <p class="text-gray-700 leading-relaxed">Spatial clustering suggests that economic mobility may be limited by geographic location, creating "pockets" of poverty in an otherwise prosperous county.</p>
+            </div>
+            <div>
+                <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Economic Attributes</h4>
+                <p class="text-gray-700 leading-relaxed">The disparity between Eastside's single-digit poverty and South County's 13%+ rates highlights a significant wealth gap in the tech hub region.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 4. 页脚 -->
+    <footer class="py-16 bg-gray-900 text-gray-500 text-center">
+        <div class="max-w-xs mx-auto border-t border-gray-800 pt-8">
+            <p class="uppercase tracking-widest text-[10px] mb-4">Storytelling with Data Project</p>
+            <p class="text-[10px] leading-loose">Data Source: CensusReporter.org<br>Images: King County Skyline View<br>© 2024 Analysis Submission</p>
+        </div>
+    </footer>
+
+    <!-- Datawrapper 脚本 -->
+    <script type="text/javascript">
+        window.addEventListener("message", function(a) {
+            if (void 0 !== a.data["datawrapper-height"]) {
+                var e = document.querySelectorAll("iframe");
+                for (var t in a.data["datawrapper-height"])
+                    for (var r, i = 0; r = e[i]; i++)
+                        if (r.contentWindow === a.source) {
+                            var d = a.data["datawrapper-height"][t] + "px";
+                            r.style.height = d
+                        }
+            }
+        });
+    </script>
+</body>
+</html>
